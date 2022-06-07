@@ -29,7 +29,7 @@ private:
     String _logBuff = "";
     
 public:
-    char *VeR = "flashLOG v2.1";
+    char *VeR = "flashLOG v2.2";
     unsigned long lastUpdate = 0;
 
 private:
