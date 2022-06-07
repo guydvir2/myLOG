@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #include "myLOG.h"
 
 flashLOG::flashLOG(char *filename)
@@ -7,7 +6,7 @@ flashLOG::flashLOG(char *filename)
 }
 bool flashLOG::start(uint8_t max_entries, bool delyedSave, bool debugmode)
 {
-    _logSize = max_entries;
+    _maxLOG_entries = max_entries;
     _useDelayedSave = delyedSave;
     _useDebug = debugmode;
 
@@ -43,12 +42,12 @@ void flashLOG::write(const char *message, bool NOW)
     }
     else
     {
-        lastUpdate = millis();
+        lastUpdate = millis(); // Making sure update will be in delay to request.
     }
 }
 void flashLOG::rawPrintfile()
 {
-    uint8_t row_counter = 0;
+    int row_counter = 0;
     File file = LITFS.open(_logfilename, "r");
     if (!file)
     {
@@ -61,6 +60,7 @@ void flashLOG::rawPrintfile()
     Serial.print("~~~ Saved in ");
     Serial.print(_logfilename);
     Serial.println(" ~~~");
+
     while (file.available())
     {
         String line = file.readStringUntil(_EOL);
@@ -68,6 +68,7 @@ void flashLOG::rawPrintfile()
         Serial.println(lineFormat);
         row_counter++;
     }
+
     Serial.println("~~~ EOF ~~~");
     file.close();
 }
@@ -142,7 +143,7 @@ bool flashLOG::delog()
 {
     return LITFS.remove(_logfilename);
 }
-int flashLOG::getnumlines()
+int flashLOG::get_num_saved_records()
 {
     int row_counter = 0;
     File file = LITFS.open(_logfilename, "r");
@@ -151,8 +152,13 @@ int flashLOG::getnumlines()
     {
         while (file.available())
         {
-            file.readStringUntil(_EOL);
-            row_counter++;
+            char ch = file.read();
+            if (ch == _EOL)
+            {
+                row_counter++;
+            }
+            // file.readStringUntil(_EOL);
+            // row_counter++;
         }
     }
     file.close();
@@ -187,14 +193,13 @@ bool flashLOG::_chkFileOK(File &_file)
         return 1;
     }
 }
-void flashLOG::_emptyBuffer()
+void flashLOG::_clearBuffer()
 {
     _logBuff = "";
 }
 void flashLOG::_insert_record_to_buffer(const char *inmsg)
 {
-    _logBuff += String(inmsg);
-    _logBuff += _EOL;
+    _logBuff += String(inmsg) + _EOL;
 }
 int flashLOG::_getBuffer_records()
 {
@@ -202,82 +207,41 @@ int flashLOG::_getBuffer_records()
     int _start = 0;
     int lineCounter = 0;
 
-    if (_logBuff.length() > 0)
+    while (_end < _logBuff.length() && _logBuff.length() > 0)
     {
-        while (true)
+        _end = _logBuff.indexOf(_EOL, _start);
+        if (_end > _start)
         {
-            _end = _logBuff.indexOf(_EOL, _start);
-            if (_end == -1)
-            {
-                return 0;
-            }
-            else if (_end == _logBuff.length() - 1)
-            {
-                return ++lineCounter;
-            }
-            else
-            {
-                _start = _end + 1;
-                lineCounter++;
-            }
+            lineCounter++;
+            _start = _end + 1;
         }
     }
-    else
-    {
-        return 0;
-    }
-}
-String flashLOG::_getBuffer_line(int requested_line)
-{
-    int _start = 0;
-    int _end = 0;
-    int lineCounter = 0;
-
-    if (_logBuff.length() > 0 && requested_line >= 0)
-    {
-        while (lineCounter <= requested_line)
-        {
-            _end = _logBuff.indexOf(_EOL, _start);
-            if (lineCounter == requested_line)
-            {
-                return _logBuff.substring(_start, _end);
-            }
-            else if (_end > _logBuff.length() - 1)
-            {
-                return "Error_0";
-            }
-            else
-            {
-                _start = _end + 1;
-                lineCounter++;
-            }
-        }
-    }
-    else
-    {
-        return "Error_1";
-    }
+    return lineCounter;
 }
 bool flashLOG::_write2file()
 {
     bool _line_added = false;
-    int _m = _getBuffer_records(); // Lines stored in buffer
-    int num_lines = getnumlines(); // entries stored
-    if (_logSize - 1 < num_lines + _m)
+    int _m = _getBuffer_records();           // Lines stored in buffer
+    int num_lines = get_num_saved_records(); // entries stored
+    if (_maxLOG_entries - 1 < num_lines + _m)
     {
-        _del_lines(num_lines + _m + 1 - _logSize);
+        _del_lines(num_lines + _m + 1 - _maxLOG_entries);
     }
 
     File file1 = LITFS.open(_logfilename, "a+");
+
+    int _start = 0;
 
     if (_chkFileOK(file1))
     {
         for (int x = 0; x < _m; x++)
         {
-            file1.println(_getBuffer_line(x));
+            int _end = _logBuff.indexOf(_EOL, _start);
+            file1.println(_logBuff.substring(_start, _end));
+            _start = _end + 1;
             _line_added = true;
         }
-        _emptyBuffer();
+        _clearBuffer();
         lastUpdate = 0;
     }
     file1.close();
