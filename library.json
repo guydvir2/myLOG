@@ -1,0 +1,22 @@
+{
+    "name": "myLOG",
+    "version": "2.5",
+    "description": "Savelog to flash ESP32/8266",
+    "keywords": "planet, happiness, people",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/guydvir2/myLOG"
+    },
+    "authors": [
+        {
+            "name": "guyDvir",
+            "email": "",
+            "url": ""
+        }
+    ],
+    "license": "MIT",
+    "homepage": "https://www.helloworld.org/",
+    "dependencies": {},
+    "frameworks": "*",
+    "platforms": "*"
+}
