@@ -199,8 +199,8 @@ void flashLOG::_insert_record_to_buffer(const char *inmsg)
 }
 int flashLOG::_getBuffer_records()
 {
-    int _end = 0;
-    int _start = 0;
+    unsigned int _end = 0;
+    unsigned int _start = 0;
     int lineCounter = 0;
 
     while (_end < _logBuff.length() && _logBuff.length() > 0)
