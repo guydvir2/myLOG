@@ -32,7 +32,7 @@ private:
     const char *_logfilename = "/logfile1234567.txt";
 
 public:
-    const char *VeR = "flashLOG v2.5";
+    const char *VeR = "flashLOG v2.5a";
     unsigned long lastUpdate = 0;
 
 private:

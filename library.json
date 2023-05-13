@@ -1,6 +1,6 @@
 {
     "name": "myLOG",
-    "version": "2.5",
+    "version": "2.5b",
     "description": "Savelog to flash ESP32/8266",
     "keywords": "planet, happiness, people",
     "repository": {
